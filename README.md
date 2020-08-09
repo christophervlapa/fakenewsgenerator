@@ -1,5 +1,8 @@
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+# Fake News Generator 1.0.0
 
+Concept based on the cut-ups of William S. Burroughs, and automatic writing. This app will create news story titles and more from words taken from a wide variety of RSS news feeds.
+
+App uses React for delivery to the front end, grid for layout and Node to grab all the RSS and process that into .csv files for that day.
 ## Available Scripts
 
 In the project directory, you can run:
