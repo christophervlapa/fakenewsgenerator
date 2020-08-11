@@ -1,4 +1,3 @@
-const { resolve } = require('path');
 let Parser = require('rss-parser');
 let parser = new Parser();
 
@@ -7,90 +6,45 @@ class MakeFeedFile {
     constructor(feedsURLArray) {
         this.feedsURLArray = feedsURLArray;
         this.fs = require('fs');
-        this.wordsArray = ["bar"];
+        this.wordsArray = [];
 
         this.todaysJsonFeedTitlesFile = () => {
             const today = new Date();
             const todaysDate = ("0" + today.getDate()).slice(-2) + '-' + ("0" + (today.getMonth()+1)).slice(-2) + '-' + ("0" + today.getFullYear()).slice(-2);
             return `./public/feed-title-files/feed-titles_${todaysDate}.csv`;
-        }
-
-        // convert CSV data from file to array, split all the titles into words
-        // Then remove duplicate words
-        // @TODO phase two, not MVP
-        this.curateWordsFromTitles = (word) => {
-            if(word.length > 1 || word.regex.exec(['a-zA-Z'])) {
-                return word.replace(/[^\w\s]/gi, '')
-            }
-
         }
 
         this.convertTitlesArrayToCSV = ( titlesArray ) => {
             return titlesArray.join("/n");
         }
 
-        // this.getRSSFeedTitles = () => {
-
-
-
-        //     const CORS_PROXY = "https://cors-anywhere.herokuapp.com/"
-        //     const { auFeeds } = "./public/au_rss_news_feeds.json";
-        //     // let tempArr = []
-        //     console.log("auFeeds ",auFeeds);
-
-        //     let map1 = feeds.map(( feedURL ) => {
-        //         return parser.parseURL( CORS_PROXY + feedURL, function(err, feed) {
-        //             if (err) {
-        //                 console.error("FEED: ",feedURL);
-        //                 throw err;
-        //             }
-        //             feed.items.forEach(function(entry) {
-        //                 // console.log(entry.title);
-        //                 tempArr.push(entry.title);
-        //             })
-        //         })
-        //     })
-
-        //     // Promise.all(map1).then((values) => {
-        //     //     console.log("tempArr ",tempArr)
-        //     // return tempArr;
-        // }
-
-        this.todaysJsonFeedTitlesFile = () => {
-            const today = new Date();
-            const todaysDate = ("0" + today.getDate()).slice(-2) + '-' + ("0" + (today.getMonth()+1)).slice(-2) + '-' + ("0" + today.getFullYear()).slice(-2);
-            return `./public/feed-title-files/feed-titles_${todaysDate}.csv`;
-            // return `./public/feed-title-files/feed-titles_07-08-20.csv`;
-        }
-
-        this.writeTodaysFeedFile = () => {
+        this.writeTodaysFeedFile = async () => {
 
             let newTitlesArray = [];
-            const { auFeeds } = "./public/au_rss_news_feeds.json";
+            let rawFeedsJSON = this.fs.readFileSync('./public/au_rss_news_feeds.json');
+            let { auFeeds } = JSON.parse(rawFeedsJSON);
 
-            const map1 = new Promise((resolve) => {
-                auFeeds.forEach(( feedURL ) => {
-                    console.log("feedURL ",feedURL)
-                    let feed = parser.parseURL(feedURL);
-                    feed.items.forEach(item => {
-                        console.log(item.title)
-                        newTitlesArray.push(item.title);
-                    });
+            await Promise.allSettled(
+                auFeeds.map(( feedURL ) => {
+                    return (async () => {
+                        let feed = await parser.parseURL(feedURL);
+                        feed.items.forEach(item => {
+                            newTitlesArray.push(item.title);
+                            return item.title;
+                        });
+                    })()
                 })
-
-                resolve((newTitlesArray) => {
-                    console.log("newTitlesArray", newTitlesArray)
-                });
-            })
-
-            map1.then((todaysTitles) => {
-
-                console.log("todaysTitles ",todaysTitles);
-                this.fs.writeFile(this.todaysJsonFeedTitlesFile(), todaysTitles.join("\n"), function (err) {
+            ).then(() => {
+                console.log("newTitlesArray ",newTitlesArray);
+                this.fs.writeFile(this.todaysJsonFeedTitlesFile(), newTitlesArray.join("\n"), function (err) {
                     if (err) return console.log(err);
-                    console.log('Hello World > helloworld.txt');
+                    console.log(newTitlesArray.length + ' written to new file ' + this.todaysJsonFeedTitlesFile());
                 });
-            })
+            }).catch(reasons => {
+                console.log("results ",reasons);
+            });
+
+            
         }
 
         this.readTodaysFeedTitles = () => {
@@ -100,13 +54,10 @@ class MakeFeedFile {
             const titles = new Promise((resolve) => {
 
                 this.fs.readFile(this.todaysJsonFeedTitlesFile(), 'utf8', function (err,data) {
-                    if(err){
-                        throw err;
-                    }
-    
+                    if(err){ throw err; }
                     let titlesArray = data.split("\n");
-    
                     titlesArray.forEach((titleLine) => {
+                        titleLine = titleLine.replace(/[^a-zA-Z0-9 ]/g, "").toLocaleLowerCase();
                         tempWordsArray.push(...titleLine.split(" "));
                     })
     
@@ -118,15 +69,16 @@ class MakeFeedFile {
             });
     
             titles.then((titlesArray) => {
+                console.log("titlesArray " + titlesArray);
                 this.wordsArray = titlesArray;   
             })
         }
-
     }
+    
 
     getFeeds() {
 
-        let todaysFile = this.todaysJsonFeedTitlesFile();
+        const todaysFile = this.todaysJsonFeedTitlesFile();
 
         try {
             if (this.fs.existsSync(todaysFile)) {
@@ -134,7 +86,7 @@ class MakeFeedFile {
                 this.readTodaysFeedTitles();
             } else {
                 console.log("todaysFile NO");
-                this.writeTodaysFeedTitles();
+                this.writeTodaysFeedFile();
                 this.readTodaysFeedTitles();
             }
         } catch(err) {
@@ -142,8 +94,6 @@ class MakeFeedFile {
         }        
     }
 }
-
-// module.exports = MakeFeedFile;
 
 let makeFeeds = new MakeFeedFile();
 
