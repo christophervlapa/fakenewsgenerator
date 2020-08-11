@@ -2,13 +2,13 @@ let Parser = require('rss-parser');
 let parser = new Parser();
 const http = require('http');
 
-const requestListener = function (req, res) {
-    res.writeHead(200);
-    res.end('Hello, World!');
-  }
+// const requestListener = function (req, res) {
+//     res.writeHead(200);
+//     res.end('Hello, World!');
+//   }
   
-  const server = http.createServer(requestListener);
-  server.listen(8080);
+//   const server = http.createServer(requestListener);
+//   server.listen(8080);
 
 class MakeFeedFile {
 
@@ -20,7 +20,7 @@ class MakeFeedFile {
         this.todaysJsonFeedTitlesFile = () => {
             const today = new Date();
             const todaysDate = ("0" + today.getDate()).slice(-2) + '-' + ("0" + (today.getMonth()+1)).slice(-2) + '-' + ("0" + today.getFullYear()).slice(-2);
-            return `./public/feed-title-files/feed-titles_${todaysDate}.json`;
+            return `./feed-assets/feed-title-files/feed-titles_${todaysDate}.json`;
         }
 
         this.convertTitlesArrayToCSV = ( titlesArray ) => {
@@ -30,7 +30,7 @@ class MakeFeedFile {
         this.writeTodaysFeedFile = async (readFile) => {
 
             let newTitlesArray = [];
-            let rawFeedsJSON = this.fs.readFileSync('./public/au_rss_news_feeds.json');
+            let rawFeedsJSON = this.fs.readFileSync('./feed-assets/au_rss_news_feeds.json');
             let { auFeeds } = JSON.parse(rawFeedsJSON);
 
             await Promise.allSettled(
