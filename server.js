@@ -1,14 +1,7 @@
 let Parser = require('rss-parser');
 let parser = new Parser();
-const http = require('http');
-
-// const requestListener = function (req, res) {
-//     res.writeHead(200);
-//     res.end('Hello, World!');
-//   }
-  
-//   const server = http.createServer(requestListener);
-//   server.listen(8080);
+const jsonServer = require('json-server')
+const path = require('path')
 
 class MakeFeedFile {
 
@@ -38,7 +31,8 @@ class MakeFeedFile {
                     return (async () => {
                         let feed = await parser.parseURL(feedURL);
                         feed.items.forEach(item => {
-                            newTitlesArray.push('"' + item.title + '"');
+                            let tempTitle = item.title.replace(/[^a-zA-Z0-9 ]/g, "").toLocaleLowerCase();
+                            newTitlesArray.push('"' + tempTitle + '"');
                             return item.title;
                         });
                     })()
@@ -50,7 +44,7 @@ class MakeFeedFile {
                         ${newTitlesArray.join(",")}
                 ]}
                     `;
-                    console.log("JSON ",todaysTempJSON);
+                    // console.log("JSON ",todaysTempJSON);
 
                 this.fs.writeFile(this.todaysJsonFeedTitlesFile(), todaysTempJSON, function (err) {
                     if (err) return console.log(err);
@@ -62,49 +56,30 @@ class MakeFeedFile {
 
             
         }
-
-        // this.readTodaysFeedTitles = () => {
-
-        //     let tempWordsArray = [];
-
-        //     const titles = new Promise((resolve) => {
-
-        //         this.fs.readFile(this.todaysJsonFeedTitlesFile(), 'utf8', function (err,data) {
-        //             if(err){ throw err; }
-        //             let titlesArray = data.split("\n");
-        //             titlesArray.forEach((titleLine) => {
-        //                 titleLine = titleLine.replace(/[^a-zA-Z0-9 ]/g, "").toLocaleLowerCase();
-        //                 tempWordsArray.push(...titleLine.split(" "));
-        //             })
-    
-        //             let wordsArray =  [...new Set(tempWordsArray)];
-    
-        //             resolve(wordsArray);
-    
-        //         });
-        //     });
-    
-        //     titles.then((titlesArray) => {
-        //         console.log("titlesArray " + titlesArray);
-        //         this.wordsArray = titlesArray;   
-        //     })
-        // }
     }
     
-
     getFeeds() {
 
         const todaysFile = this.todaysJsonFeedTitlesFile();
 
         try {
             if (!this.fs.existsSync(todaysFile)) {
-                console.log("todaysFile NO");
                 this.writeTodaysFeedFile();
-                // this.readTodaysFeedTitles();
             }
         } catch(err) {
             console.log("Uh oh! An error: ",err);
         }        
+
+        // Serve up the file as JSON
+        const server = jsonServer.create();
+        const router = jsonServer.router(path.join(__dirname, this.todaysJsonFeedTitlesFile()));
+        const middlewares = jsonServer.defaults();
+        
+        server.use(middlewares);
+        server.use(router);
+        server.listen(3000, () => {
+            console.log('JSON Server is running on http://localhost:3000')
+        })
     }
 }
 
