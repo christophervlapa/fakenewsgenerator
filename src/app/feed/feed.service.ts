@@ -8,17 +8,21 @@ import { catchError, retry } from 'rxjs/operators';
 export class FeedService {
 
     @Output() words: EventEmitter<any> = new EventEmitter();
+    @Output() stories: EventEmitter<number> = new EventEmitter();
 
     constructor(@Inject(HttpClient) private http: HttpClient) {
         this.getJSON().subscribe(titlesArray => {
+            this.stories.emit(titlesArray.length);
             let tempFeedWordsArray = [];
             titlesArray.forEach((titleLine) => {
                 titleLine = titleLine.replace(/[^a-zA-Z0-9 ]/g, "").toLocaleLowerCase();
                 tempFeedWordsArray.push(...titleLine.split(" "));
             })
 
+            console.log("titlesArray.length ",titlesArray.length);
             // Cool trick: set has unique entries, then use spread to turn back into array
             this.words.emit([...new Set(tempFeedWordsArray)]);
+            
             
         });
     }
