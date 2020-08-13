@@ -1,6 +1,73 @@
-<h1>FEED DISPLAY</h1>
-<ul *ngFor="let story of newStories">
-    <li>
-        {{ story }}
-    </li>
-</ul>
+<div class="container">
+    <div class="title">
+        <h1>FAKE NEWS</h1>
+    </div>
+    <div class="stories" *ngFor="let storyItem of newStories; index as i">
+        <!-- <div class="story-block" *ngFor="let story of storyItems"> -->
+            <div class="main-story" [ngClass]="{'main-left': 0 === i % 2}">
+                <div class="left-dynamic">
+                    <div class="story-image">
+                        <img src="https://loremflickr.com/320/200/news?random={{ i }}" alt="">
+                    </div>
+                    <div class="story-title">
+                        {{ storyItem[0] }}
+                    </div>
+                </div>
+                <div class="right-dynamic">
+                    <div class="small-story">
+                        <div class="story-title">
+                            {{ storyItem[1] }}
+                        </div>
+                    </div>
+                    <div class="small-story">
+                        <div class="story-title">
+                            {{ storyItem[2] }}
+                        </div>
+                    </div>
+                    <div class="small-story">
+                        <div class="story-title">
+                            {{ storyItem[3] }}
+                        </div>
+                    </div>
+                    <div class="small-story">
+                        <div class="story-title">
+                            {{ storyItem[4] }}
+                        </div>
+                    </div>
+                    <div class="small-story">
+                        <div class="story-title">
+                            {{ storyItem[5] }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="break"></div>
+            <div class="secondary-stories">
+                <div class="story-row">
+                    <div class="small-story">
+                        <div class="story-title">
+                            {{ storyItem[6] }}
+                        </div>
+                    </div>
+                    <div class="small-story">
+                        <div class="story-title">
+                            {{ storyItem[7] }}
+                        </div>
+                    </div>
+                </div>
+                <div class="story-row">
+                    <div class="small-story">
+                        <div class="story-title">
+                            {{ storyItem[8] }}
+                        </div>
+                    </div>
+                    <div class="small-story">
+                        <div class="story-title">
+                            {{ storyItem[9] }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        <!-- </div> -->
+    </div>
+</div>

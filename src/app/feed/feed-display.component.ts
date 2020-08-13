@@ -25,9 +25,8 @@ export class FeedDisplayComponent  implements OnInit {
 
     senseMaker = (story: string) => {
 
-        let dumbEndingsArr = ["the", "and", "its", "a", "where", "which", "im", "shes", "hes", "if"];
+        let dumbEndingsArr = ["the", "and", "its", "a", "where", "which", "im", "shes", "hes", "if", "there", "she", "he", "very", "just", ];
         if(dumbEndingsArr.includes(story.split(" ").pop())) { // if the story has a dumb ending, trim it
-            console.log("DUM ENDING ",story);
             var lastIndex = story.lastIndexOf(" ");
             return story.substring(0, lastIndex);
         }
@@ -45,18 +44,31 @@ export class FeedDisplayComponent  implements OnInit {
 
             let counter = 0;
 
-            while(counter < this.numberOfStories) {
-                let newStoryTitle = "";
-                let wordCounter = 0;
-
-                while(wordCounter < this.getRandomInteger(4,12)) {
-                    wordCounter++;
-                    newStoryTitle = newStoryTitle + " " + words[Math.floor(Math.random()*words.length)];
-                }
+            while(counter < (this.numberOfStories / 10)) {
+                
+                let newStoriesItem = [];
+                
                 counter++;
-                this.senseMaker(newStoryTitle);
-                this.newStories.push(this.capitalizeFirstLetter(newStoryTitle.trim()));
+                
+                // array of 7 stories per item, so that items can be looped thru
+                // to build out page
+                while(newStoriesItem.length < 10){
+                    let wordCounter = 0;
+                    let newStoryTitle = "";
+
+                    while(wordCounter < this.getRandomInteger(4,12)) {
+                        wordCounter++;
+                        newStoryTitle = newStoryTitle + " " + words[Math.floor(Math.random()*words.length)];
+                    }
+                    this.senseMaker(newStoryTitle);
+                    newStoriesItem.push(this.capitalizeFirstLetter(newStoryTitle.trim()));
+                }
+
+                this.newStories.push(newStoriesItem);
+                
             }
+
+            console.log("this.newStories ",this.newStories);
 
         })
         

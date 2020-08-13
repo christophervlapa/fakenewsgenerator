@@ -8,6 +8,7 @@ class MakeFeedFile {
     constructor(feedsURLArray) {
         this.feedsURLArray = feedsURLArray;
         this.fs = require('fs');
+        this.fsPromises = this.fs.promises;
         this.wordsArray = [];
 
         this.todaysJsonFeedTitlesFile = () => {
@@ -20,7 +21,7 @@ class MakeFeedFile {
             return titlesArray.join("/n");
         }
 
-        this.writeTodaysFeedFile = async (readFile) => {
+        this.todaysFeedFile = async () => {
 
             let newTitlesArray = [];
             let rawFeedsJSON = this.fs.readFileSync('./feed-assets/au_rss_news_feeds.json');
@@ -38,23 +39,39 @@ class MakeFeedFile {
                     })()
                 })
             ).then(() => {
-                console.log("newTitlesArray ",newTitlesArray);
+                
                 // create the JSON string to write to today's title file:
                 const todaysTempJSON = `{"titles" :[
                         ${newTitlesArray.join(",")}
                 ]}
                     `;
-                    // console.log("JSON ",todaysTempJSON);
 
+                    this.fsPromises.writeFile(this.todaysJsonFeedTitlesFile(), todaysTempJSON,'utf8').then(() => {
+
+                        console.log(newTitlesArray.length + ' titles written to new file ');
+
+                        // Only once it's written start the JSON server, otherwise we get an empty feed
+                        const server = jsonServer.create();
+                        const router = jsonServer.router(path.join(__dirname, this.todaysJsonFeedTitlesFile()));
+                        const middlewares = jsonServer.defaults();
+                        server.use(middlewares);
+                        server.use(router);
+                        server.listen(3000, () => {
+                            console.log('JSON Server is running on http://localhost:3000')
+                        })
+
+                    }).catch(err => {
+                        console.log("Error writing to file: " + err)
+                    })
                 this.fs.writeFile(this.todaysJsonFeedTitlesFile(), todaysTempJSON, function (err) {
                     if (err) return console.log(err);
-                    console.log(newTitlesArray.length + ' written to new file ');
+                    
                 });
+
+                
             }).catch(reasons => {
                 console.log("Error somewhere with RSS feed promises: ",reasons);
             });
-
-            
         }
     }
     
@@ -62,24 +79,15 @@ class MakeFeedFile {
 
         const todaysFile = this.todaysJsonFeedTitlesFile();
 
-        try {
-            if (!this.fs.existsSync(todaysFile)) {
-                this.writeTodaysFeedFile();
-            }
-        } catch(err) {
-            console.log("Uh oh! An error: ",err);
-        }        
-
-        // Serve up the file as JSON
-        const server = jsonServer.create();
-        const router = jsonServer.router(path.join(__dirname, this.todaysJsonFeedTitlesFile()));
-        const middlewares = jsonServer.defaults();
-        
-        server.use(middlewares);
-        server.use(router);
-        server.listen(3000, () => {
-            console.log('JSON Server is running on http://localhost:3000')
+        this.fsPromises.access(todaysFile, this.fs.constants.R_OK | this.fs.constants.W_OK)
+        .then(() => {
+            console.error('file exists can access')
         })
+        .catch(() => {
+            console.log("writing todays file ")
+            this.todaysFeedFile()
+            
+        });     
     }
 }
 
